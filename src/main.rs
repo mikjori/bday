@@ -12,6 +12,7 @@ struct Bdays {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Person {
     name: String,
+    surname: String,
     bday: String,
     id: u32,
 }
@@ -26,8 +27,13 @@ impl Bdays {
 }
 
 impl Person {
-    fn new(name: String, bday: String, id: u32) -> Person {
-        Person { name, bday, id }
+    fn new(name: String, surname: String, bday: String, id: u32) -> Person {
+        Person {
+            name,
+            surname,
+            bday,
+            id,
+        }
     }
 }
 
@@ -93,31 +99,33 @@ fn main() -> io::Result<()> {
 
                     table.add_row(Row::new(vec![
                         Cell::new(&person.id.to_string())
-                            .with_style(Attr::ForegroundColor(color::BRIGHT_BLUE)),
-                        Cell::new(&person.name)
-                            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+                            .with_style(Attr::ForegroundColor(color::RED))
+                            .with_style(Attr::Bold),
+                        Cell::new(&format!("{} {}", &person.name, &person.surname))
+                            .with_style(Attr::ForegroundColor(color::YELLOW)),
                         Cell::new(&get_formatted_date(&person.bday))
-                            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+                            .with_style(Attr::ForegroundColor(color::BLUE)),
                         Cell::new(&format!(
                             "{} days",
                             next_bday.signed_duration_since(now).num_days() - 1
                         ))
-                        .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+                        .with_style(Attr::ForegroundColor(color::BLUE)),
                         Cell::new(&format!("{} years", (next_bday.year() - bday.year())))
-                            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+                            .with_style(Attr::ForegroundColor(color::BLUE)),
                     ]));
                 }
                 table.printstd();
                 exit(0);
             }
             "add" => {
-                if args.len() < 4 {
-                    println!("Enter the required arguments! \"bday add [name] [day-month-year]\"");
+                if args.len() < 5 {
+                    println!("Enter the required arguments! \"bday add [name] [surname] [day-month-year]\"");
                     exit(0);
                 }
 
                 let name = &args[2];
-                let bday = &args[3];
+                let surname = &args[3];
+                let bday = &args[4];
 
                 let split = bday.split('-').collect::<Vec<&str>>();
                 let day = split[0].parse::<u32>().unwrap();
@@ -132,10 +140,10 @@ fn main() -> io::Result<()> {
                 bdays.index += 1;
 
                 println!(
-                    "Added \"{}\" with birthday on {}. (ID: {}).",
-                    name, date, id
+                    "Added \"{} {}\" with birthday on {}. (ID: {}).",
+                    name, surname, date, id
                 );
-                let person = Person::new(name.to_owned(), date, id);
+                let person = Person::new(name.to_owned(), surname.to_owned(), date, id);
 
                 bdays.list.push(person);
             }
@@ -169,13 +177,15 @@ fn main() -> io::Result<()> {
                 let mut table = Table::new();
 
                 println!("Birthdays today:");
-                println!();
 
                 table.add_row(Row::new(vec![
                     Cell::new("ID")
                         .with_style(Attr::ForegroundColor(color::GREEN))
                         .with_style(Attr::Bold),
                     Cell::new("Name")
+                        .with_style(Attr::ForegroundColor(color::GREEN))
+                        .with_style(Attr::Bold),
+                    Cell::new("Age today")
                         .with_style(Attr::ForegroundColor(color::GREEN))
                         .with_style(Attr::Bold),
                 ]));
@@ -185,15 +195,18 @@ fn main() -> io::Result<()> {
                     if bday.day() == now.day() && bday.month() == now.month() {
                         table.add_row(Row::new(vec![
                             Cell::new(&person.id.to_string())
-                                .with_style(Attr::ForegroundColor(color::BRIGHT_BLUE)),
-                            Cell::new(&person.name)
-                                .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+                                .with_style(Attr::ForegroundColor(color::RED))
+                                .with_style(Attr::Bold),
+                            Cell::new(&format!("{} {}", &person.name, &person.surname))
+                                .with_style(Attr::ForegroundColor(color::YELLOW)),
+                            Cell::new(&format!("{} years", (now.year() - bday.year())))
+                                .with_style(Attr::ForegroundColor(color::BLUE)),
                         ]));
                     }
                 }
 
                 if table.len() == 1 {
-                    println!("No birthdays :(");
+                    println!("No birthdays today :(");
                 } else {
                     table.printstd();
                 }
@@ -232,7 +245,7 @@ fn help() {
         Remove a person.
     \x1b[32mls/list\x1b[0m
         List birthdays.
-    \x1b[32madd [name] [day-month-year]\x1b[0m
+    \x1b[32madd [name] [surname] [day-month-year]\x1b[0m
         Add a person.
     \x1b[32mtd/today\x1b[0m
         List today's birthdays.
@@ -244,7 +257,7 @@ Link: \x1b[4m\x1b[34mhttps://github.com/rv178/bday\x1b[0m",
 }
 
 fn get_formatted_date(date: &str) -> String {
-    parse_date(date).format("%d %B").to_string()
+    parse_date(date).format("%A, %d %B %Y").to_string()
 }
 
 fn parse_date(date: &str) -> NaiveDate {
