@@ -96,6 +96,11 @@ fn main() -> io::Result<()> {
                 for person in &bdays.list {
                     let bday = parse_date(&person.bday);
                     let next_bday = next_occurance(now, bday);
+                    let days_until_next_bday = next_bday.signed_duration_since(now).num_days() - 1;
+                    let formatted_days = match days_until_next_bday {
+                        0 => format!("Tomorrow!!!"),
+                        _ => format!("{} days", days_until_next_bday),
+                    };
 
                     table.add_row(Row::new(vec![
                         Cell::new(&person.id.to_string())
@@ -105,11 +110,7 @@ fn main() -> io::Result<()> {
                             .with_style(Attr::ForegroundColor(color::YELLOW)),
                         Cell::new(&get_formatted_date(&person.bday))
                             .with_style(Attr::ForegroundColor(color::BLUE)),
-                        Cell::new(&format!(
-                            "{} days",
-                            next_bday.signed_duration_since(now).num_days() - 1
-                        ))
-                        .with_style(Attr::ForegroundColor(color::BLUE)),
+                        Cell::new(&formatted_days).with_style(Attr::ForegroundColor(color::BLUE)),
                         Cell::new(&format!("{} years", (next_bday.year() - bday.year())))
                             .with_style(Attr::ForegroundColor(color::BLUE)),
                     ]));
