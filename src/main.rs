@@ -133,7 +133,8 @@ fn main() -> io::Result<()> {
                 let month = split[1].parse::<u32>().unwrap();
                 let year = split[2].parse::<i32>().unwrap();
 
-                let date = NaiveDate::from_ymd(year, month, day)
+                let date = NaiveDate::from_ymd_opt(year, month, day)
+                    .unwrap()
                     .format("%d %B %Y")
                     .to_string();
 
